@@ -1,0 +1,71 @@
+from django.shortcuts import render,redirect,HttpResponse
+from django.contrib.auth import authenticate,login,logout
+from models import User, Teacher, Student  
+
+# Create your views here.
+
+
+
+def home(request):
+    return render(request,"home.html")
+
+def student_register(request):
+    if request.method =='POST':
+        firstname=request.POST["firstname"]
+        lastname=request.POST["lastname"]
+        email=request.POST["email"]
+        username=request.POST["username"]
+        password=request.POST["password"]
+        address=request.POST["address"]
+        phone_number=request.POST["phone_number"]
+        guardian=request.POST["guardian"]
+        new_user=User.objects.create_user(firstname=firstname,lastname=lastname,email=email,username=username,password=password,usertype='student',is_active=False)
+        new_user.save()
+        x=Student.objects.create(student_id=new_user,address=address,phone_number=phone_number,guardian=guardian)
+        x.save()
+        return HttpResponse('worked')
+    else:
+        return render(request,"register.html")
+    
+
+def teacher_registration(request):
+    if request.method=='POST':
+        firstname=request.POST["firstname"]
+        lastname=request.POST["lastname"]
+        email=request.POST["email"]
+        username=request.POST["username"]
+        password=request.POST["password"]
+        address=request.POST["address"]
+        phone_number=request.POST["phone_number"]
+        salary=request.POST["salary"]
+        experience=request.POST["experience"]
+        new_user=User.objects.create_user(first_name=firstname,last_name=lastname,email=email,username=username,password=password,usertype='teacher',is_active=True,is_staff=True)
+        new_user.save()
+        x=Teacher.objects.create(teacher_id=new_user,address=address,phone_number=phone_number,salary=salary,experience=experience)
+        x.save()
+        return HttpResponse("worked")
+    else:
+        return render(request,"teacherreg.html")
+    
+
+def logins(request):
+    if request.method=='POST':
+        username=request.POST["username"]
+        password=request.POST["password"]
+        userpass=authenticate(request,username=username,password=password)
+        if userpass is not None and userpass.is_superuser==1:
+            return redirect('admin')
+        elif userpass is not None and userpass.is_staff==1:
+            login(request,userpass)
+            request.session['teacher_id']=userpass.id
+            return redirect("teacherhome")
+        elif userpass is not None and userpass.is_active==1:
+            login(request,userpass)
+            request.session["student_id"]=userpass.id
+            return redirect("studenthome")
+        else:
+            return HttpResponse("invalid login")
+    else:
+        return render(request,"login.html")
+    
+    
